@@ -13,6 +13,8 @@ sbar
 
 Homebrew adds this public tap automatically and builds the tagged source release. No GitHub account or organization access is required. Rust is installed as a build dependency if needed.
 
+If `sbar` is already installed from another tap, run `brew uninstall sbar` before installing it from this tap.
+
 To update:
 
 ```sh
