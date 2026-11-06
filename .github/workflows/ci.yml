@@ -1,0 +1,31 @@
+name: Homebrew
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ANALYTICS: "1"
+    steps:
+      - name: Set up Homebrew and check out this tap
+        uses: Homebrew/actions/setup-homebrew@1fc4b1bd23e4bd625dc35df612f539122fc51a81
+        with:
+          stable: true
+      - name: Check formula style
+        run: brew style funkydude755/tap/sbar
+      - name: Install from the public release
+        run: brew install --build-from-source funkydude755/tap/sbar
+      - name: Test the installed package
+        run: brew test funkydude755/tap/sbar
+      - name: Audit the formula
+        run: brew audit --strict funkydude755/tap/sbar
