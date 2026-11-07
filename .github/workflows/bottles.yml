@@ -33,8 +33,12 @@ jobs:
       - name: Build Intel macOS with the runner's Rust compiler
         if: matrix.os == 'macos-15-intel'
         run: |
-          rustc --version
-          cargo --version
+          set -euo pipefail
+          toolchain_bin="$(dirname "$(rustup which cargo)")"
+          export PATH="$toolchain_bin:$PATH"
+          command -v cargo rustc | tee compiler-info.txt
+          rustc -vV | tee -a compiler-info.txt
+          cargo --version | tee -a compiler-info.txt
           brew install --build-bottle --ignore-dependencies funkydude755/tap/sbar
       - name: Test the installed package
         run: brew test funkydude755/tap/sbar
@@ -52,4 +56,5 @@ jobs:
           path: |
             *.bottle.tar.gz
             *.bottle.json
+            compiler-info.txt
           if-no-files-found: error
