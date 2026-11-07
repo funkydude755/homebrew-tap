@@ -1,0 +1,43 @@
+name: Build bottles
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bottle:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, ubuntu-22.04, ubuntu-22.04-arm]
+    runs-on: ${{ matrix.os }}
+    env:
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_INSTALL_CLEANUP: "1"
+      HOMEBREW_NO_ANALYTICS: "1"
+    steps:
+      - name: Set up Homebrew and check out this tap
+        uses: Homebrew/actions/setup-homebrew@1fc4b1bd23e4bd625dc35df612f539122fc51a81
+        with:
+          stable: true
+      - name: Build the release for distribution
+        run: brew install --build-bottle funkydude755/tap/sbar
+      - name: Test the installed package
+        run: brew test funkydude755/tap/sbar
+      - name: Verify linked libraries
+        run: brew linkage --test funkydude755/tap/sbar
+      - name: Package the bottle
+        run: |
+          brew bottle --json --no-rebuild \
+            --root-url=https://github.com/funkydude755/homebrew-tap/releases/download/sbar-0.2.2 \
+            funkydude755/tap/sbar
+      - name: Upload bottles and checksums for publication
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: bottle-${{ matrix.os }}
+          path: |
+            *.bottle.tar.gz
+            *.bottle.json
+          if-no-files-found: error

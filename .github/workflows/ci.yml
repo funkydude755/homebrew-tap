@@ -1,6 +1,15 @@
 name: Homebrew
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    paths:
+      - Formula/**
+      - .github/workflows/ci.yml
+  pull_request:
+    paths:
+      - Formula/**
+      - .github/workflows/ci.yml
+  workflow_dispatch:
 
 permissions:
   contents: read
