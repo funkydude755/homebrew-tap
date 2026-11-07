@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        os: [macos-15, macos-15-intel, macos-26, ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
     env:
       HOMEBREW_NO_AUTO_UPDATE: "1"
@@ -32,8 +32,44 @@ jobs:
           stable: true
       - name: Check formula style
         run: brew style funkydude755/tap/sbar
-      - name: Install from the public release
-        run: brew install --build-from-source funkydude755/tap/sbar
+      - name: Remove Homebrew compiler packages from the disposable runner
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import re
+          import subprocess
+
+          def installed():
+              return subprocess.check_output(["brew", "list", "--formula"], text=True).splitlines()
+
+          compilers = [name for name in installed() if re.fullmatch(r"(?:rust|llvm)(?:@.*)?", name)]
+          if compilers:
+              subprocess.run(["brew", "uninstall", "--ignore-dependencies", *compilers], check=True)
+          pathlib.Path(os.environ["RUNNER_TEMP"], "formulae-before.txt").write_text("\n".join(installed()))
+          PY
+      - name: Install using the normal public command
+        run: brew install funkydude755/tap/sbar
+      - name: Require a bottle without compiler dependencies
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+          import subprocess
+
+          info = json.loads(subprocess.check_output([
+              "brew", "info", "--json=v2", "funkydude755/tap/sbar"
+          ], text=True))["formulae"][0]
+          assert info["installed"] and all(item["poured_from_bottle"] for item in info["installed"]), info
+          after = set(subprocess.check_output(["brew", "list", "--formula"], text=True).splitlines())
+          compilers = sorted(name for name in after if re.fullmatch(r"(?:rust|llvm)(?:@.*)?", name))
+          assert not compilers, f"Compiler packages were installed: {compilers}"
+          before = set(pathlib.Path(os.environ["RUNNER_TEMP"], "formulae-before.txt").read_text().splitlines())
+          print("Newly installed formulae:", sorted(after - before))
+          print("Installed from a bottle without Homebrew Rust or LLVM.")
+          PY
       - name: Test the installed package
         run: brew test funkydude755/tap/sbar
       - name: Audit the formula
