@@ -2,6 +2,11 @@ name: Build bottles
 
 on:
   workflow_dispatch:
+    inputs:
+      intel_only:
+        description: Rebuild only the Intel macOS bottle
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -11,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, macos-15-intel, ubuntu-24.04, ubuntu-24.04-arm]
+        os: ${{ inputs.intel_only && fromJSON('["macos-15-intel"]') || fromJSON('["macos-15", "macos-15-intel", "ubuntu-24.04", "ubuntu-24.04-arm"]') }}
     runs-on: ${{ matrix.os }}
     env:
       HOMEBREW_NO_AUTO_UPDATE: "1"
@@ -23,7 +28,14 @@ jobs:
         with:
           stable: true
       - name: Build the release for distribution
+        if: matrix.os != 'macos-15-intel'
         run: brew install --build-bottle funkydude755/tap/sbar
+      - name: Build Intel macOS with the runner's Rust compiler
+        if: matrix.os == 'macos-15-intel'
+        run: |
+          rustc --version
+          cargo --version
+          brew install --build-bottle --ignore-dependencies --env=std funkydude755/tap/sbar
       - name: Test the installed package
         run: brew test funkydude755/tap/sbar
       - name: Verify linked libraries
