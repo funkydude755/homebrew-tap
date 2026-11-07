@@ -35,7 +35,7 @@ jobs:
         run: |
           rustc --version
           cargo --version
-          brew install --build-bottle --ignore-dependencies --env=std funkydude755/tap/sbar
+          brew install --build-bottle --ignore-dependencies funkydude755/tap/sbar
       - name: Test the installed package
         run: brew test funkydude755/tap/sbar
       - name: Verify linked libraries

@@ -7,6 +7,13 @@ class Sbar < Formula
 
   depends_on "rust" => :build
 
+  on_macos do
+    on_intel do
+      # Intel CI uses the runner's Rust toolchain because Homebrew no longer bottles it.
+      env :std
+    end
+  end
+
   def install
     system "cargo", "install", *std_cargo_args
     (share/"licenses/sbar").install "LICENSE", "THIRD_PARTY_LICENSES.md"
