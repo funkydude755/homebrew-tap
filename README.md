@@ -28,6 +28,6 @@ See the [sbar repository](https://github.com/funkydude755/sbar) for usage and te
 
 ## Maintenance
 
-The formula pins public source and bottle archives by SHA-256 checksum. CI tests the normal install command on macOS and Linux, requires installation from a bottle, and verifies that Homebrew Rust and LLVM packages are absent afterward.
+The formula pins public source and bottle archives by SHA-256 checksum. Builds and installation checks run locally; GitHub Actions is disabled.
 
-For a new version, prepare the source URL/checksum and the release URL in `.github/workflows/bottles.yml` on a release branch, then run the **Build bottles** workflow on that branch. It builds and tests all four native packages and uploads bottle archives and metadata as workflow artifacts. Review those artifacts, publish the archives to the public tap release using the metadata's `filename` values, and update the formula's `bottle` block with the generated checksums and Cellar settings. Publish the assets before merging the formula into `main` so normal installs always have their matching bottles available.
+For a new version, build and test bottles for Apple Silicon and Intel macOS, and ARM64 and x86-64 Linux. Verify that normal installation pours a bottle without installing Rust or LLVM. Publish the four archives and checksums before merging the formula's source URL, bottle checksums, and Cellar settings into `main`.
